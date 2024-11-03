@@ -85,12 +85,12 @@ class MultiHeadAttention(nn.Module):
         #         Split           |       Combine
         # ========================|======================
         #   |                   B T C                  /\
-        #   |    <view>           |            <view>   |
-        #   |                  B T h dk                 |
-        #   |    <transpose>      |       <transpose>   |
-        #  \/                  B h T dk                 |
-        #                         |
-        #                      <attn>
+        #   |    <view>          |            <view>   |
+        #   |                 B T h dk                 |
+        #   |    <transpose>     |       <transpose>   |
+        #  \/                B h T dk                  |
+        #                        |
+        #                     <attn>
         # ===============================================
 
 
@@ -201,6 +201,7 @@ class Transformer(nn.Module):
 
         self.last_lin = nn.Linear(embed_dim, dec_vocab_size, bias=False) # bias false we're tying its weights with the embedding layer
         self.last_lin.weight = self.emb.embed.weight # tying weights
+    
     def forward(self, dec_x, enc_x = None, memory = None, enc_padding_mask = None, ):
         if memory is None:
             memory = self.enc(self.emb(enc_x), enc_padding_mask) # Encoder
