@@ -118,7 +118,7 @@ wandb.init(project="scratch-transformer")
 checkpoint_folder = "./model_weights/"
 
 optimizer = optim.Adam(model.parameters(), lr=0.0001, foreach=True)
-criterion = nn.CrossEntropyLoss(ignore_index=0).to('cpu')
+criterion = nn.CrossEntropyLoss(ignore_index=0).to(device)
 
 # Training parameters
 torch.set_float32_matmul_precision("medium")  # Precision of matrix multiplication
