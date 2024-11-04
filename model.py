@@ -7,6 +7,7 @@ _MAX_CONTEXT_SIZE = 10_000
 class Embed(nn.Module):
     def __init__(self, vocab_size, embed_dim, dropout=0):
         super().__init__()
+        self.emb_factor = torch.sqrt(torch.tensor(embed_dim, dtype=torch.float32))
         self.embed = nn.Embedding(vocab_size, embed_dim) # vocab x C
         self.dropout = nn.Dropout(dropout)
 
@@ -27,6 +28,7 @@ class Embed(nn.Module):
     def forward(self,x):
         # x = B x T (NOT 1-hot)
         embed_x = self.embed(x) # B T C
+        embed_x = embed_x * self.emb_factor # presumably to not be overpowered by the positional encoding
 
         # ================================
         # For variable length
