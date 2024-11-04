@@ -48,6 +48,7 @@ def get_tokenizer(tokenizer_pth=None, train_file=None):
     tokenizer.enable_truncation(max_length=_MAX_LEN)
     tokenizer.decoder = decoders.ByteLevel()
     os.environ["TOKENIZERS_PARALLELISM"] = "false"
+    return tokenizer
 
 # ========================================================
 # greedy decoding
