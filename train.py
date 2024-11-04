@@ -4,17 +4,14 @@ import torch.optim as optim
 from torch.utils.data import DataLoader
 from tqdm.auto import tqdm
 from torch.utils.data import Dataset
-from tokenizers import Tokenizer, trainers, models, pre_tokenizers, normalizers, decoders
-from torch.nn.utils.rnn import pad_sequence
 import wandb  
 import kagglehub
-from tokenizers import Tokenizer
 import os
 import pandas as pd
 import random
 
 from model import Transformer
-from utils import create_tokenizer, generate_text, load_last_checkpoint
+from utils import generate_text, load_last_checkpoint, get_tokenizer
 
 # ========================================================
 # Download dataset and/or set path
@@ -28,17 +25,8 @@ test_file = path + "/wmt14_translate_de-en_test.csv"
 # ========================================================
 # Initalise tokenizer
 # ========================================================
-_MAX_LEN = 512 # for training
 print("Loading Tokenizer...")
-tokenizer_pth='wmt14_de_en_tokenizer.json'
-if not os.path.exists(tokenizer_pth):
-    create_tokenizer(tokenizer_pth, train_file) # create new tokenizer
-
-tokenizer = Tokenizer.from_file(tokenizer_pth)
-tokenizer.enable_padding(pad_id=0, pad_token="[PAD]")
-tokenizer.enable_truncation(max_length=_MAX_LEN)
-tokenizer.decoder = decoders.ByteLevel()
-os.environ["TOKENIZERS_PARALLELISM"] = "false"
+tokenizer = get_tokenizer(train_file=train_file)
 print(tokenizer.encode("this is my cat").tokens)
 
 # ========================================================
@@ -165,8 +153,8 @@ for epoch in tqdm(range(start_epoch+1, num_epochs), desc="Epochs"):
 
         # print the sample translations
         if (step % 20_000)==0:
-            s1= generate_text(model, tokenizer, "this is my cat", 30)
-            s2 = generate_text(model, tokenizer, "The quick brown fox jumps over the lazy dog, swiftly avoiding the deep, mysterious forest that lies ahead.",70)
+            s1= generate_text("this is my cat", model, tokenizer, max_len=10)
+            s2 = generate_text("The quick brown fox jumps over the lazy dog, swiftly avoiding the deep, mysterious forest that lies ahead.", model, tokenizer, max_len=70)
             print(s1)
             print(s2 + "\n")
             wandb.log({"example_sentence_1": s1, "example_sentence_2": s2})

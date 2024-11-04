@@ -1,8 +1,11 @@
-from tokenizers import Tokenizer, trainers, models, pre_tokenizers, normalizers
+from tokenizers import Tokenizer, trainers, models, pre_tokenizers, normalizers, decoders
 import pandas as pd
 import torch
 import re
 import os
+
+_MAX_LEN = 512
+_DEFAULT_TOKENIZER_FILE = "wmt14_de_en_tokenizer.json"
 
 # ========================================================
 # train tokenizer
@@ -29,11 +32,29 @@ def create_tokenizer(tokenizer_pth, train_file):
     tokenizer.train_from_iterator(get_training_corpus(train_file), trainer=trainer)
     tokenizer.save(tokenizer_pth)
 
+# ========================================================
+# get tokenizer
+# ========================================================
+def get_tokenizer(tokenizer_pth=None, train_file=None):
+    if tokenizer_pth is None:
+        tokenizer_pth = _DEFAULT_TOKENIZER_FILE
+    if not os.path.exists(tokenizer_pth):
+        if train_file is None:
+            raise ValueError("Tokenizer file does not exist. You can create a new tokenizer by providing a training file.")
+        create_tokenizer(tokenizer_pth, train_file) # create new tokenizer
+
+    tokenizer = Tokenizer.from_file(tokenizer_pth)
+    tokenizer.enable_padding(pad_id=0, pad_token="[PAD]")
+    tokenizer.enable_truncation(max_length=_MAX_LEN)
+    tokenizer.decoder = decoders.ByteLevel()
+    os.environ["TOKENIZERS_PARALLELISM"] = "false"
 
 # ========================================================
 # greedy decoding
 # ========================================================
-def generate_text(model, tokenizer, enc_text, max_len=10):
+def generate_text(enc_text, model, tokenizer=None, max_len=10):
+    if tokenizer is None:
+        tokenizer = get_tokenizer()
     device = next(model.parameters()).device
     enc_inp = tokenizer.encode(enc_text)
     enc_ids = torch.tensor(enc_inp.ids).to(device)
