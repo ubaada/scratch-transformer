@@ -87,6 +87,9 @@ def generate_text(model, tokenizer, enc_text, max_len=10):
 # Load last check point (if any)
 # ========================================================
 def load_last_checkpoint(model, folder):
+    if not os.path.exists(folder):
+        os.makedirs(folder)
+        return 0
     checkpoints = [f for f in os.listdir(folder) if re.match(r'transformer_epoch_\d+.pt', f)]
     if not checkpoints:
         return 0
