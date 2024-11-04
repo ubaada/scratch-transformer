@@ -22,7 +22,7 @@ def create_tokenizer(tokenizer_pth, train_file):
     # Initialize the tokenizer
     tokenizer = Tokenizer(models.BPE())
     tokenizer.normalizer = normalizers.NFKC()
-    tokenizer.pre_tokenizer = pre_tokenizers.Whitespace()
+    tokenizer.pre_tokenizer = pre_tokenizers.ByteLevel()
     trainer = trainers.BpeTrainer(vocab_size=37000, special_tokens=["[PAD]", "[BOS]", "[EOS]", "[UNK]"])
     
     # Train the tokenizer with data yielded from get_training_corpus

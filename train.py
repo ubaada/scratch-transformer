@@ -4,7 +4,7 @@ import torch.optim as optim
 from torch.utils.data import DataLoader
 from tqdm.auto import tqdm
 from torch.utils.data import Dataset
-from tokenizers import Tokenizer, trainers, models, pre_tokenizers, normalizers
+from tokenizers import Tokenizer, trainers, models, pre_tokenizers, normalizers, decoders
 from torch.nn.utils.rnn import pad_sequence
 import wandb  
 import kagglehub
@@ -29,13 +29,14 @@ test_file = path + "/wmt14_translate_de-en_test.csv"
 # ========================================================
 _MAX_LEN = 512 # for training
 print("Loading Tokenizer...")
-tokenizer_pth='wmt14_de_en_tokenizer2.json'
+tokenizer_pth='wmt14_de_en_tokenizer.json'
 if not os.path.exists(tokenizer_pth):
     create_tokenizer(tokenizer_pth, train_file) # create new tokenizer
 
 tokenizer = Tokenizer.from_file(tokenizer_pth)
 tokenizer.enable_padding(pad_id=0, pad_token="[PAD]")
 tokenizer.enable_truncation(max_length=_MAX_LEN)
+tokenizer.decoder = decoders.ByteLevel()
 os.environ["TOKENIZERS_PARALLELISM"] = "false"
 print(tokenizer.encode("this is my cat").tokens)
 
@@ -96,7 +97,6 @@ dec_vocab_size = 37000
 dropout = 0.1
 
 model = Transformer(N, N, dmodel, h, enc_vocab_size, dec_vocab_size, dff, dropout)
-#model = torch.compile(model, mode="reduce-overhead")
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 model.to(device)
 print("Initialised Model. Params:", sum(p.numel() for p in model.parameters()))
@@ -160,8 +160,8 @@ for epoch in tqdm(range(start_epoch+1, num_epochs), desc="Epochs"):
 
         # print the sample translations
         if (step % 20_000)==0:
-            s1= generate_text(model, tokenizer, "this is my cat", 10)
-            s2 = generate_text(model, tokenizer, "The quick brown fox jumps over the lazy dog, swiftly avoiding the deep, mysterious forest that lies ahead.",40)
+            s1= generate_text(model, tokenizer, "this is my cat", 30)
+            s2 = generate_text(model, tokenizer, "The quick brown fox jumps over the lazy dog, swiftly avoiding the deep, mysterious forest that lies ahead.",70)
             print(s1)
             print(s2 + "\n")
             wandb.log({"example_sentence_1": s1, "example_sentence_2": s2})
@@ -173,7 +173,7 @@ for epoch in tqdm(range(start_epoch+1, num_epochs), desc="Epochs"):
         optimizer.zero_grad()
     
     average_loss = total_loss / len(data_loader)
-    wandb.log({"epoch_loss": average_loss, "epoch": epoch + 1})
+    wandb.log({"epoch_loss": average_loss, "epoch": epoch})
     print(f"Epoch {epoch}, Average Loss: {average_loss:.4f}")
 
     # -------------------------------
