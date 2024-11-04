@@ -11,6 +11,7 @@ import kagglehub
 from tokenizers import Tokenizer
 import os
 import pandas as pd
+import random
 
 from model import Transformer
 from utils import create_tokenizer, generate_text, load_last_checkpoint
@@ -73,8 +74,12 @@ class WMT14Dataset(Dataset):
 
     def __getitem__(self, idx):
         row = self.data.iloc[idx]
-        en = "[BOS] " + row["en"] + " [EOS]" # encoder input, not sure if we need BOS and EOS
-        de = "[BOS] " + row["de"] + " [EOS]" # decoder input
+        # Data Augmentation to randomly drop punctuation (, . ? !) just from input
+        if random.random() < 0.2:
+            row["en"] = row["en"].replace(",", "").replace(".", "").replace("?", "").replace("!", "")
+
+        en = "[BOS]" + row["en"] + "[EOS]" # encoder input, not sure if we need BOS and EOS
+        de = "[BOS]" + row["de"] + "[EOS]" # decoder input
         return en, de
 
 print("Loading Datasets...")
