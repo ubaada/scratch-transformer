@@ -58,15 +58,14 @@ class MultiHeadAttention(nn.Module):
         #apply mask in decoder layer
         if self.causal_mask == True:
             seq_len = q.shape[-2]
+            # produces 0s in the lower triangle and -inf in the upper triangle
             mask = torch.triu(torch.full((seq_len,seq_len), fill_value=-torch.inf,device=q.device), diagonal=1)
-            #mask = torch.triu(torch.full((seq_len,seq_len), fill_value=-torch.inf), diagonal=1)
-            #mask = mask.to(q.device)
             output = output + mask
         
         # apply padding mask in encoder self-attention and decoder cross-attention
         if padding_mask is not None:
             padding_mask = torch.tensor(padding_mask).unsqueeze(1).unsqueeze(1) # B x 1 x 1 x T (broadcasting)
-            padding_mask = torch.where(padding_mask == 0, -torch.inf, padding_mask) # -inf turns to 0
+            padding_mask = torch.where(padding_mask == 0, -torch.inf, 0) # turn 0s to -inf and 1s to 0
             output = output + padding_mask
             
 
@@ -143,10 +142,11 @@ class EncoderLayer(nn.Module):
 class EncoderStack(nn.Module):
     def __init__(self, embed_dim, num_heads, num_layers, d_ff, dropout=0):
         super().__init__()
-        layers = [EncoderLayer(embed_dim, num_heads, d_ff, dropout) for i in range(num_layers)]
-        self.layers = nn.Sequential(*layers)
+        self.layers = nn.ModuleList([EncoderLayer(embed_dim, num_heads, d_ff, dropout) for i in range(num_layers)])
     def forward(self, x, padding_mask = None):
-        return self.layers(x)
+        for layer in self.layers:
+            x = layer(x, padding_mask)
+        return x
     
 class DecoderLayer(nn.Module):
     def __init__(self, embed_dim, num_heads, d_ff,dropout=0):
@@ -165,25 +165,21 @@ class DecoderLayer(nn.Module):
         self.pwlinear = PointwiseFeedForward(embed_dim, d_ff)
         self.lin_norm = nn.LayerNorm(embed_dim)
         self.dropout3 = nn.Dropout(dropout)
-    def forward(self, dict_x):
-        x, enc_out = dict_x['prev_tok'],  dict_x['enc_out']
-        output = self.att_norm(x + self.dropout1(self.m_att(x,x,x)))
-        output = self.cross_att_norm(output + self.dropout2(self.cross_att(output, enc_out,enc_out)))
-        output = self.lin_norm(output + self.dropout3(self.pwlinear(output)))
+    def forward(self, x, enc_out, enc_padding_mask = None):
+        output = self.att_norm(x + self.dropout1(self.m_att(x,x,x))) # self attention
+        output = self.cross_att_norm(output + self.dropout2(self.cross_att(output, enc_out,enc_out, padding_mask=enc_padding_mask))) # cross attention
+        output = self.lin_norm(output + self.dropout3(self.pwlinear(output))) # pointwise feedforward
 
-        # repack the out/prev_tok and enc_out for the next decoder layer in the stack
-        dict_x = {"prev_tok":output, "enc_out":enc_out}
-        return dict_x
+        return output
 
 class DecoderStack(nn.Module):
     def __init__(self, embed_dim, num_heads, num_layers, d_ff,dropout=0):
         super().__init__()
-        layers = [DecoderLayer(embed_dim, num_heads, d_ff,dropout) for i in range(num_layers)]
-        self.layers = nn.Sequential(*layers)
-    def forward(self, x, enc_out):
-        # Pkg x and enc_out into a dictionary
-        dict_x = {"prev_tok":x, "enc_out":enc_out}
-        return self.layers(dict_x)["prev_tok"]
+        self.layers = nn.ModuleList([DecoderLayer(embed_dim, num_heads, d_ff,dropout) for i in range(num_layers)])
+    def forward(self, x, enc_out, enc_padding_mask = None):
+        for layer in self.layers:
+            x = layer(x, enc_out, enc_padding_mask)
+        return x
     
 class Transformer(nn.Module):
     def __init__(self, 
@@ -207,7 +203,7 @@ class Transformer(nn.Module):
     def forward(self, dec_x, enc_x = None, memory = None, enc_padding_mask = None, ):
         if memory is None:
             memory = self.enc(self.emb(enc_x), enc_padding_mask) # Encoder
-        dec_out = self.dec(self.emb(dec_x), memory) # Decoder(prev_step, enc_output)
+        dec_out = self.dec(self.emb(dec_x), memory, enc_padding_mask) # Decoder
         logits = self.last_lin(dec_out)
         return {
             "logits": logits,
