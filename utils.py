@@ -53,7 +53,9 @@ def get_tokenizer(tokenizer_pth=None, train_file=None):
 # ========================================================
 # greedy decoding
 # ========================================================
-def generate_text(model, tokenizer, enc_text, max_len=10):
+def generate_text(enc_text, model, tokenizer=None, max_len=10):
+    if tokenizer is None:
+        tokenizer = get_tokenizer()
     device = next(model.parameters()).device
     enc_inp = tokenizer.encode(enc_text)
     enc_ids = torch.tensor(enc_inp.ids).to(device)
