@@ -53,9 +53,7 @@ def get_tokenizer(tokenizer_pth=None, train_file=None):
 # ========================================================
 # greedy decoding
 # ========================================================
-def generate_text(enc_text, model, tokenizer=None, max_len=10):
-    if tokenizer is None:
-        tokenizer = get_tokenizer()
+def generate_text(model, tokenizer, enc_text, max_len=10):
     device = next(model.parameters()).device
     enc_inp = tokenizer.encode(enc_text)
     enc_ids = torch.tensor(enc_inp.ids).to(device)
@@ -64,12 +62,10 @@ def generate_text(enc_text, model, tokenizer=None, max_len=10):
         enc_ids = torch.cat([torch.tensor([tokenizer.token_to_id("[BOS]")]).to(device), enc_ids])
     if enc_ids[-1] != tokenizer.token_to_id("[EOS]"):
         enc_ids = torch.cat([enc_ids, torch.tensor([tokenizer.token_to_id("[EOS]")]).to(device)])
-    enc_padding_mask = torch.tensor(enc_inp.attention_mask).to(device)
 
     # Add batch dimension if needed
     if len(enc_ids.shape) == 1:
         enc_ids = enc_ids.unsqueeze(0)
-        enc_padding_mask = enc_padding_mask.unsqueeze(0)
 
     # Initialize token history with BOS token ID
     bos_token_id = tokenizer.token_to_id("[BOS]")
@@ -81,10 +77,10 @@ def generate_text(enc_text, model, tokenizer=None, max_len=10):
         prev_dec_inputs = torch.tensor(gen_ids).unsqueeze(0).to(device)
 
         if memory is None:
-            out = model(dec_x=prev_dec_inputs, enc_x=enc_ids, enc_padding_mask=enc_padding_mask)
+            out = model(dec_x=prev_dec_inputs, enc_x=enc_ids)
             memory = out["memory"]
         else:
-            out = model(dec_x=prev_dec_inputs, memory=memory, enc_padding_mask=enc_padding_mask)
+            out = model(dec_x=prev_dec_inputs, memory=memory)
 
         # Get logits of the last token
         logits = out["logits"]
