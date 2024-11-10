@@ -1,7 +1,7 @@
 
-![demonstration](https://github.com/user-attachments/assets/f95d8fec-9793-4d91-a8d0-7caaa607de8d)
-
-
+<p align="center">
+  <img src="https://github.com/user-attachments/assets/f95d8fec-9793-4d91-a8d0-7caaa607de8d" />
+</p>
 
 # Scratch Transformer
 Reimplementation of the original 2017 "Attention is all you need" transformer from 2017. For a detailed overview, see [my long blog post](https://www.ubaada.com/post/fc9c5fc3).
