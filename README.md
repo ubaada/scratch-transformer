@@ -8,7 +8,7 @@ Reimplementation of the original 2017 "Attention is all you need" transformer fr
 
 The encoder-deocder base model with apprx. 63M was trained on WMT-14 English-to-German dataset. I tried to match the original paper where possible.
 ## Usage
-### 1. Using huggingface transformer library (Recommended): 
+### Method 1: Using huggingface transformer library (Recommended): 
 Automatically downloads all the files including model weights and tokenizer.json.
 ``` python
 model = AutoModel.from_pretrained("ubaada/original-transformer", trust_remote_code=True)
@@ -19,8 +19,8 @@ tokenizer.decode(output[0], skip_special_tokens=True, clean_up_tokenization_spac
 # # ' Das ist meine Katze.'
 ```
 
-### 2. Manual:
-Clone the repo. Download pytorch_model.py from [HF repo](https://huggingface.co/ubaada/original-transformer) under ./model_weights/. Download tokenizer and places it in './'.
+### Method 2: Manual
+Clone the repo. Download pytorch_model.bin from [HF repo](https://huggingface.co/ubaada/original-transformer) under ./model_weights/. Download tokenizer and places it in root.
 ``` bash
 python utils.py generate
 # Enter text to translate or press Enter to exit.
