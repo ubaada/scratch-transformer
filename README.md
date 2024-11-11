@@ -27,6 +27,29 @@ python utils.py generate
 # >>> 
 ```
 ## Training
+
+| Parameter            | Value                                                                                           |
+|----------------------|-------------------------------------------------------------------------------------------------|
+| Dataset              | WMT14-de-en                                                                                     |
+| Translation Pairs    | 4.5M (83M tokens total)                                                                         |
+| Epochs               | 24                                                                                              |
+| Batch Size           | 16                                                                                              |
+| Accumulation Batch   | 8                                                                                               |
+| Effective Batch Size | 128 (16 * 8)                                                                                    |
+| Training Script      | [train.py](https://github.com/ubaada/scratch-transformer/blob/main/train.py)             |
+| Optimiser            | Adam (learning rate = 0.0001)                                                                   |
+| Loss Type            | Cross Entropy |
+| Final Test Loss      | 1.87 |
+| GPU.                 | RTX 4070 (12GB) |
+
+<img src="https://github.com/user-attachments/assets/e533e35b-0236-4856-81d8-7f0b949478f9" width="500"/>
+
+
+## Results
+<img src="https://github.com/user-attachments/assets/6a9e8714-95f5-4c9f-a24a-472a7726feff" width="500" />
+
+
+## Training Yourself
 To train, simply run:
 ``` bash
 python train.py
