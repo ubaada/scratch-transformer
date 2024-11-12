@@ -31,7 +31,7 @@ python utils.py generate
 | Parameter            | Value                                                                                           |
 |----------------------|-------------------------------------------------------------------------------------------------|
 | Dataset              | WMT14-de-en                                                                                     |
-| Translation Pairs    | 4.5M (83M tokens total)                                                                         |
+| Translation Pairs    | 4.5M (135M tokens total)                                                                         |
 | Epochs               | 24                                                                                              |
 | Batch Size           | 16                                                                                              |
 | Accumulation Batch   | 8                                                                                               |
